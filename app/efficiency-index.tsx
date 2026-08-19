@@ -8,6 +8,12 @@ type Miner = {
   cooling: Cooling; year: number; source: string; sourceName: string; status?: "Shipping" | "Announced";
   segment?: "Industrial" | "Home";
   note?: string;
+  mode?: string;
+  noise?: string;
+  voltage?: string;
+  powerBoundary?: "Wall" | "Board";
+  confidence?: "Manufacturer" | "Catalog" | "Open hardware";
+  video?: { url: string; title: string };
 };
 
 const miners: Miner[] = [
@@ -36,12 +42,18 @@ const miners: Miner[] = [
   { maker:"Bitmain", model:"Antminer S19 XP", hashrate:141, watts:3010, jth:21.35, cooling:"Air", year:2022, source:"https://www.asicminervalue.com/", sourceName:"ASIC Miner Value" },
   { maker:"Bitmain", model:"Antminer S19k Pro", hashrate:120, watts:2760, jth:23, cooling:"Air", year:2023, source:"https://www.bitdeer.com/shop/explorer", sourceName:"Bitdeer Explorer" },
   { maker:"FutureBit", model:"Apollo III — comparison mode", hashrate:18, watts:270, jth:15, cooling:"Air", year:2026, segment:"Home", status:"Announced", note:"Preorder · approximate manufacturer comparison", source:"https://www.futurebit.io/apollo-iii", sourceName:"FutureBit" },
-  { maker:"FutureBit", model:"Apollo II — efficiency mode", hashrate:10, watts:280, jth:28, cooling:"Air", year:2024, segment:"Home", note:"Best advertised efficiency", source:"https://www.futurebit.io/apollo-ii", sourceName:"FutureBit" },
+  { maker:"FutureBit", model:"Apollo II — efficiency mode", hashrate:10, watts:280, jth:28, cooling:"Air", year:2024, segment:"Home", note:"Best advertised efficiency", mode:"Efficiency", confidence:"Manufacturer", powerBoundary:"Board", source:"https://www.futurebit.io/apollo-ii", sourceName:"FutureBit", video:{url:"https://www.youtube.com/watch?v=SNQpJmxrf8I",title:"Futurebit Apollo II — How to replace Control board"} },
   { maker:"FutureBit", model:"Apollo BTC (Gen I)", hashrate:3, watts:180, jth:60, cooling:"Air", year:2021, segment:"Home", note:"Approximate manufacturer comparison", source:"https://www.futurebit.io/apollo-btc", sourceName:"FutureBit" },
+  { maker:"Canaan", model:"Avalon Q", hashrate:90, watts:1674, jth:18.6, cooling:"Air", year:2025, segment:"Home", status:"Shipping", mode:"Rated", confidence:"Manufacturer", powerBoundary:"Wall", source:"https://shop.canaan.io/products/avalon-q-1", sourceName:"Canaan" },
+  { maker:"Canaan", model:"Avalon Mini 3", hashrate:37.5, watts:800, jth:21.33, cooling:"Air", year:2025, segment:"Home", status:"Shipping", mode:"Super / mining", noise:"33–55 dB", voltage:"110–240 V", confidence:"Manufacturer", powerBoundary:"Wall", source:"https://shop.canaan.io/products/avalon-mini-3", sourceName:"Canaan" },
+  { maker:"Canaan", model:"Avalon Nano 3", hashrate:4, watts:116, jth:29, cooling:"Air", year:2024, segment:"Home", mode:"Rated efficiency point", noise:"33–36 dB", voltage:"28 V DC", note:"116 W implied by Canaan's 4 TH/s at 29 J/TH rating; 140 W maximum", confidence:"Manufacturer", source:"https://shop.canaan.io/products/avalon-nano-3", sourceName:"Canaan" },
+  { maker:"Braiins", model:"Mini Miner BMM 101", hashrate:1, watts:40, jth:40, cooling:"Air", year:2024, segment:"Home", status:"Shipping", mode:"Default", noise:"~40 dB", voltage:"100–240 V", confidence:"Manufacturer", powerBoundary:"Wall", source:"https://braiins.com/hardware/mini-miner-bmm-100", sourceName:"Braiins" },
+  { maker:"Braiins", model:"Mini Miner BMM 100", hashrate:1, watts:40, jth:40, cooling:"Air", year:2024, segment:"Home", mode:"Default", noise:"Quiet", voltage:"100–240 V", confidence:"Manufacturer", powerBoundary:"Wall", source:"https://braiins.com/blog/braiins-ecosystem", sourceName:"Braiins" },
+  { maker:"Heatbit", model:"Trio", hashrate:10, watts:400, jth:40, cooling:"Air", year:2025, segment:"Home", status:"Shipping", mode:"Mining", noise:"Up to 45 dB", note:"400 W mining draw; 1,500 W total with supplemental heating", confidence:"Manufacturer", powerBoundary:"Wall", source:"https://heatbit.com/products/heatbit-trio", sourceName:"Heatbit" },
   { maker:"GekkoScience", model:"KBox — medium mode", hashrate:17, watts:242, jth:14.24, cooling:"Air", year:2026, segment:"Home", source:"https://altairtech.io/product/gekkoscience-kbox-bitcoin-miner/", sourceName:"Altair Tech" },
-  { maker:"NerdQ", model:"NerdQAxe++ Rev 7", hashrate:4.8, watts:69.5, jth:14.48, cooling:"Air", year:2026, segment:"Home", source:"https://www.solosatoshi.com/product/nerdqaxe-plus-plus/", sourceName:"Solo Satoshi" },
+  { maker:"NerdQ", model:"NerdQAxe++ Rev 7", hashrate:4.8, watts:69.5, jth:14.48, cooling:"Air", year:2026, segment:"Home", confidence:"Open hardware", source:"https://www.solosatoshi.com/product/nerdqaxe-plus-plus/", sourceName:"Solo Satoshi", video:{url:"https://www.youtube.com/watch?v=c_tXj9E7Bxw",title:"NerdQAxe++ Rev 7 from Solo Satoshi"} },
   { maker:"GekkoScience", model:"KBox — high mode", hashrate:22, watts:322, jth:14.64, cooling:"Air", year:2026, segment:"Home", source:"https://altairtech.io/product/gekkoscience-kbox-bitcoin-miner/", sourceName:"Altair Tech" },
-  { maker:"Bitaxe", model:"Gamma 601", hashrate:1.2, watts:18, jth:15, cooling:"Air", year:2025, segment:"Home", source:"https://www.bitaxehardware.com/601", sourceName:"Bitaxe Hardware" },
+  { maker:"Bitaxe", model:"Gamma 601", hashrate:1.2, watts:18, jth:15, cooling:"Air", year:2025, segment:"Home", mode:"Rated", confidence:"Open hardware", source:"https://www.bitaxehardware.com/601", sourceName:"Bitaxe Hardware", video:{url:"https://www.youtube.com/watch?v=INjBszAtARo",title:"1.5 TH/s Bitaxe Bitcoin Miner out of the box"} },
   { maker:"Jingle Miner", model:"BTC HashCard", hashrate:12.5, watts:200, jth:16, cooling:"Air", year:2026, segment:"Home", source:"https://app.luxor.tech/en/hardware/catalog/btc-hashcard", sourceName:"Luxor Hardware" },
   { maker:"Hammer Miner", model:"BC04", hashrate:6, watts:96, jth:16, cooling:"Air", year:2026, segment:"Home", source:"https://altairtech.io/product/hammer-miner-bc04-home-bitcoin-miner/", sourceName:"Altair Tech" },
   { maker:"Bitaxe", model:"Gamma Hex", hashrate:8.4, watts:140, jth:16.67, cooling:"Hydro", year:2026, segment:"Home", source:"https://www.solosatoshi.com/product/bitaxe-gamma-hex/", sourceName:"Solo Satoshi" },
@@ -57,6 +69,16 @@ const miners: Miner[] = [
 
 type SortKey = "jth" | "hashPerKw" | "hashrate" | "watts";
 
+const efficiencyFor = (miner: Miner) => miner.watts / miner.hashrate;
+const formulaDelta = (miner: Miner) => Math.abs(efficiencyFor(miner) - miner.jth) / miner.jth;
+
+function confidenceFor(miner: Miner): NonNullable<Miner["confidence"]> {
+  if (miner.confidence) return miner.confidence;
+  if (["Bitmain","Bitdeer","Canaan","FutureBit","GekkoScience","Braiins","Heatbit"].includes(miner.sourceName)) return "Manufacturer";
+  if (miner.sourceName === "Open hardware repo") return "Open hardware";
+  return "Catalog";
+}
+
 export function EfficiencyIndex() {
   const [query, setQuery] = useState("");
   const [cooling, setCooling] = useState<"All" | Cooling>("All");
@@ -68,12 +90,13 @@ export function EfficiencyIndex() {
   const ranked = useMemo(() => {
     const q = query.trim().toLowerCase();
     return miners.filter(m => (cooling === "All" || m.cooling === cooling) && (segment === "All" || (m.segment ?? "Industrial") === segment) && (!q || `${m.maker} ${m.model}`.toLowerCase().includes(q)))
-      .sort((a,b) => sort === "jth" ? a.jth-b.jth : sort === "hashPerKw" ? (1000/b.jth)-(1000/a.jth) : sort === "hashrate" ? b.hashrate-a.hashrate : a.watts-b.watts);
+      .sort((a,b) => sort === "jth" ? efficiencyFor(a)-efficiencyFor(b) : sort === "hashPerKw" ? (1000/efficiencyFor(b))-(1000/efficiencyFor(a)) : sort === "hashrate" ? b.hashrate-a.hashrate : a.watts-b.watts);
   }, [query, cooling, segment, sort]);
 
-  const best = [...miners].sort((a,b)=>a.jth-b.jth)[0];
+  const best = [...miners].sort((a,b)=>efficiencyFor(a)-efficiencyFor(b))[0];
   const baseline = miners.find(m=>m.model === "Antminer S19k Pro")!;
-  const annualSavings = ((baseline.watts - (baseline.hashrate * best.jth)) / 1000) * 24 * 365 * powerPrice;
+  const annualSavings = ((baseline.watts - (baseline.hashrate * efficiencyFor(best))) / 1000) * 24 * 365 * powerPrice;
+  const formulaWarnings = miners.filter(miner => formulaDelta(miner) > 0.015).length;
 
   return (
     <main>
@@ -95,8 +118,8 @@ export function EfficiencyIndex() {
         </div>
         <div className="hero-stats">
           <div><b>{miners.length}</b><span>SHA-256 models</span></div>
-          <div><b>{best.jth}</b><span>best J/TH</span></div>
-          <div><b>{(1000/best.jth).toFixed(1)}</b><span>TH/s per kW</span></div>
+          <div><b>{efficiencyFor(best).toFixed(2)}</b><span>best J/TH</span></div>
+          <div><b>{(1000/efficiencyFor(best)).toFixed(1)}</b><span>TH/s per kW</span></div>
         </div>
       </section>
 
@@ -112,21 +135,23 @@ export function EfficiencyIndex() {
           <label className="sort">Cooling <select value={cooling} onChange={e=>{setCooling(e.target.value as "All" | Cooling);setVisible(12)}}><option value="All">All types</option><option value="Air">Air</option><option value="Hydro">Hydro</option><option value="Immersion">Immersion</option></select></label>
           <label className="sort">Sort by <select value={sort} onChange={e=>setSort(e.target.value as SortKey)}><option value="jth">Lowest J/TH</option><option value="hashPerKw">Highest TH/kW</option><option value="hashrate">Highest hashrate</option><option value="watts">Lowest power</option></select></label>
         </div>
+        <div className="data-strip" aria-label="Dataset quality summary"><span><b>{miners.length}</b> verified records</span><span><b>{formulaWarnings ? `${formulaWarnings} flagged` : "Formula checked"}</b> W ÷ TH/s</span><span><b>Updated</b> Aug 2026</span><a href="https://github.com/SerpentXSF/most-efficient-bitcoin-miner/issues/new" target="_blank" rel="noreferrer">Suggest a correction ↗</a></div>
 
         <div className="table-wrap">
           <table>
             <thead><tr><th>#</th><th>Hardware</th><th>Cooling</th><th>Hashrate</th><th>Power</th><th>Hash / kW</th><th>Efficiency</th><th>24h power</th></tr></thead>
             <tbody>{ranked.slice(0,visible).map((miner, index) => {
               const dayCost = miner.watts / 1000 * 24 * powerPrice;
+              const efficiency = efficiencyFor(miner);
               return <tr key={miner.model}>
                 <td className="rank">{String(index+1).padStart(2,"0")}</td>
-                <td className="hardware"><strong>{miner.model}</strong><span>{miner.maker} · {miner.year} {miner.segment === "Home" && <i>Home</i>} {miner.status && <i>{miner.status}</i>}</span>{miner.note && <small>{miner.note}</small>}</td>
+                <td className="hardware"><strong>{miner.model}</strong><span>{miner.maker} · {miner.year} {miner.segment === "Home" && <i>Home</i>} {miner.status && <i>{miner.status}</i>}</span>{(miner.mode || miner.noise || miner.voltage) && <small className="spec-meta">{[miner.mode,miner.noise,miner.voltage].filter(Boolean).join(" · ")}</small>}{miner.note && <small>{miner.note}</small>}</td>
                 <td><span className={`cooling ${miner.cooling.toLowerCase()}`}>{miner.cooling}</span></td>
                 <td>{miner.hashrate.toLocaleString()} <small>TH/s</small></td>
                 <td>{miner.watts.toLocaleString()} <small>W</small></td>
-                <td>{(1000/miner.jth).toFixed(1)} <small>TH/kW</small></td>
-                <td className="efficiency"><b>{miner.jth}</b> <small>J/TH</small><span><i style={{width:`${Math.min(100, miner.jth/30*100)}%`}} /></span></td>
-                <td><strong>${dayCost.toFixed(2)}</strong><small> @ ${powerPrice.toFixed(2)}/kWh</small><a href={miner.source} target="_blank" rel="noreferrer">Source ↗</a></td>
+                <td>{(1000/efficiency).toFixed(1)} <small>TH/kW</small></td>
+                <td className="efficiency"><b>{efficiency.toFixed(efficiency < 10 ? 2 : efficiency < 100 ? 1 : 0)}</b> <small>J/TH</small><span><i style={{width:`${Math.min(100, efficiency/30*100)}%`}} /></span></td>
+                <td><strong>${dayCost.toFixed(2)}</strong><small> @ ${powerPrice.toFixed(2)}/kWh</small><div className="row-links"><a href={miner.source} target="_blank" rel="noreferrer">Source ↗</a>{miner.video && <a className="watch-link" href={miner.video.url} title={miner.video.title} target="_blank" rel="noreferrer">Watch ▶</a>}</div><small className="confidence">{confidenceFor(miner)}{miner.powerBoundary ? ` · ${miner.powerBoundary} power` : ""}</small></td>
               </tr>;
             })}</tbody>
           </table>
@@ -154,10 +179,10 @@ export function EfficiencyIndex() {
           <article><b>02</b><h3>Rank</h3><p>Lowest manufacturer-rated J/TH wins. Ties are kept as ties; hashrate doesn’t break them because scale and efficiency are different questions.</p></article>
           <article><b>03</b><h3>Verify</h3><p>Primary specifications are preferred. Hashrate Index, WhatToMine, Hashrate.no, ASIC Miner Value, and specialist catalogs help cross-check gaps; every row links its source.</p></article>
         </div>
-        <div className="notes"><strong>Important:</strong> Specifications are typical or advertised values, not independent lab measurements. Firmware mode, ambient temperature, cooling infrastructure, PSU losses, and silicon variation can change wall efficiency. Announced hardware is labeled. This is an engineering comparison, not financial advice.</div>
+        <div className="notes"><strong>Important:</strong> Specifications are typical or advertised values, not independent lab measurements. J/TH is calculated automatically from the displayed power and hashrate. Mode, measurement boundary, ambient temperature, cooling infrastructure, PSU losses, and silicon variation can change wall efficiency. Announced hardware is labeled. This is an engineering comparison, not financial advice.</div>
       </section>
 
-      <footer><a className="brand" href="#top"><span>₿</span> ASIC EFFICIENCY INDEX</a><p>Built for miners who measure twice.</p><div><a href="https://hashrateindex.com/rigs" target="_blank" rel="noreferrer">Hashrate Index ↗</a><a href="https://whattomine.com/asics" target="_blank" rel="noreferrer">WhatToMine ↗</a><a href="https://www.hashrate.no/asics" target="_blank" rel="noreferrer">Hashrate.no ↗</a><a href="https://www.asicminervalue.com/" target="_blank" rel="noreferrer">ASIC Miner Value ↗</a></div></footer>
+      <footer><a className="brand" href="#top"><span>₿</span> ASIC EFFICIENCY INDEX</a><p>Built for miners who measure twice.</p><div><a href="https://www.youtube.com/@SerpentXTech" target="_blank" rel="noreferrer">SerpentX Tech ▶</a><a href="https://hashrateindex.com/rigs" target="_blank" rel="noreferrer">Hashrate Index ↗</a><a href="https://whattomine.com/asics" target="_blank" rel="noreferrer">WhatToMine ↗</a><a href="https://www.hashrate.no/asics" target="_blank" rel="noreferrer">Hashrate.no ↗</a><a href="https://www.asicminervalue.com/" target="_blank" rel="noreferrer">ASIC Miner Value ↗</a></div></footer>
     </main>
   );
 }

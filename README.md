@@ -32,6 +32,9 @@ Profitability, BTC price, network difficulty, pool luck, and hardware purchase p
 - Alternate sorting by TH/kW, hashrate, or power draw
 - Adjustable electricity-cost calculator
 - A source link for every hardware record
+- Operating-mode, noise, voltage, power-boundary, and source-confidence context where available
+- Automatic J/TH calculation and formula-consistency checks
+- Restrained links to relevant hands-on videos from [SerpentX Tech](https://www.youtube.com/@SerpentXTech)
 - Responsive desktop and mobile layouts
 
 ## Data and verification
@@ -47,6 +50,8 @@ Primary manufacturer specifications are preferred. Established mining databases 
 - Manufacturer and open-hardware product pages linked from individual rows
 
 FutureBit home miners are sourced from the official [Apollo III](https://www.futurebit.io/apollo-iii), [Apollo II](https://www.futurebit.io/apollo-ii), and [Apollo BTC](https://www.futurebit.io/apollo-btc) product pages. Mode-specific and approximate manufacturer comparison figures are labeled in the index.
+
+The home-miner index also includes Canaan's Avalon Q, Avalon Mini 3, and Avalon Nano 3; Braiins BMM 100 and BMM 101; and the Heatbit Trio. Records with multiple operating points identify the ranked mode or explain an implied power value.
 
 Specifications are advertised or typical values rather than independent laboratory measurements. Firmware, operating mode, cooling, PSU efficiency, ambient conditions, and silicon variation can change performance at the wall. Announced hardware is labeled on the site.
 
