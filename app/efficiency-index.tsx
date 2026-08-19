@@ -7,6 +7,7 @@ type Miner = {
   maker: string; model: string; hashrate: number; watts: number; jth: number;
   cooling: Cooling; year: number; source: string; sourceName: string; status?: "Shipping" | "Announced";
   segment?: "Industrial" | "Home";
+  note?: string;
 };
 
 const miners: Miner[] = [
@@ -34,6 +35,9 @@ const miners: Miner[] = [
   { maker:"Canaan", model:"Avalon A1466I", hashrate:170, watts:3320, jth:19.53, cooling:"Immersion", year:2024, source:"https://www.hashrate.no/asics", sourceName:"Hashrate.no" },
   { maker:"Bitmain", model:"Antminer S19 XP", hashrate:141, watts:3010, jth:21.35, cooling:"Air", year:2022, source:"https://www.asicminervalue.com/", sourceName:"ASIC Miner Value" },
   { maker:"Bitmain", model:"Antminer S19k Pro", hashrate:120, watts:2760, jth:23, cooling:"Air", year:2023, source:"https://www.bitdeer.com/shop/explorer", sourceName:"Bitdeer Explorer" },
+  { maker:"FutureBit", model:"Apollo III — comparison mode", hashrate:18, watts:270, jth:15, cooling:"Air", year:2026, segment:"Home", status:"Announced", note:"Preorder · approximate manufacturer comparison", source:"https://www.futurebit.io/apollo-iii", sourceName:"FutureBit" },
+  { maker:"FutureBit", model:"Apollo II — efficiency mode", hashrate:10, watts:280, jth:28, cooling:"Air", year:2024, segment:"Home", note:"Best advertised efficiency", source:"https://www.futurebit.io/apollo-ii", sourceName:"FutureBit" },
+  { maker:"FutureBit", model:"Apollo BTC (Gen I)", hashrate:3, watts:180, jth:60, cooling:"Air", year:2021, segment:"Home", note:"Approximate manufacturer comparison", source:"https://www.futurebit.io/apollo-btc", sourceName:"FutureBit" },
   { maker:"GekkoScience", model:"KBox — medium mode", hashrate:17, watts:242, jth:14.24, cooling:"Air", year:2026, segment:"Home", source:"https://altairtech.io/product/gekkoscience-kbox-bitcoin-miner/", sourceName:"Altair Tech" },
   { maker:"NerdQ", model:"NerdQAxe++ Rev 7", hashrate:4.8, watts:69.5, jth:14.48, cooling:"Air", year:2026, segment:"Home", source:"https://www.solosatoshi.com/product/nerdqaxe-plus-plus/", sourceName:"Solo Satoshi" },
   { maker:"GekkoScience", model:"KBox — high mode", hashrate:22, watts:322, jth:14.64, cooling:"Air", year:2026, segment:"Home", source:"https://altairtech.io/product/gekkoscience-kbox-bitcoin-miner/", sourceName:"Altair Tech" },
@@ -116,7 +120,7 @@ export function EfficiencyIndex() {
               const dayCost = miner.watts / 1000 * 24 * powerPrice;
               return <tr key={miner.model}>
                 <td className="rank">{String(index+1).padStart(2,"0")}</td>
-                <td className="hardware"><strong>{miner.model}</strong><span>{miner.maker} · {miner.year} {miner.segment === "Home" && <i>Home</i>} {miner.status && <i>{miner.status}</i>}</span></td>
+                <td className="hardware"><strong>{miner.model}</strong><span>{miner.maker} · {miner.year} {miner.segment === "Home" && <i>Home</i>} {miner.status && <i>{miner.status}</i>}</span>{miner.note && <small>{miner.note}</small>}</td>
                 <td><span className={`cooling ${miner.cooling.toLowerCase()}`}>{miner.cooling}</span></td>
                 <td>{miner.hashrate.toLocaleString()} <small>TH/s</small></td>
                 <td>{miner.watts.toLocaleString()} <small>W</small></td>

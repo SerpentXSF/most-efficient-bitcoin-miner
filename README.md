@@ -4,7 +4,9 @@ A source-linked ranking of SHA-256 Bitcoin mining hardware by energy efficiency.
 
 ## Live website
 
-[Open the ASIC Efficiency Index](https://most-efficient-bitcoin-miner.cmvjax.chatgpt.site)
+[Open the public ASIC Efficiency Index](https://serpentxsf.github.io/most-efficient-bitcoin-miner/)
+
+The public site is hosted free through GitHub Pages and does not require a ChatGPT login.
 
 ## What the index measures
 
@@ -44,6 +46,8 @@ Primary manufacturer specifications are preferred. Established mining databases 
 - [ASIC Miner Value](https://www.asicminervalue.com/)
 - Manufacturer and open-hardware product pages linked from individual rows
 
+FutureBit home miners are sourced from the official [Apollo III](https://www.futurebit.io/apollo-iii), [Apollo II](https://www.futurebit.io/apollo-ii), and [Apollo BTC](https://www.futurebit.io/apollo-btc) product pages. Mode-specific and approximate manufacturer comparison figures are labeled in the index.
+
 Specifications are advertised or typical values rather than independent laboratory measurements. Firmware, operating mode, cooling, PSU efficiency, ambient conditions, and silicon variation can change performance at the wall. Announced hardware is labeled on the site.
 
 ## Local development
@@ -59,6 +63,12 @@ Create a production build with:
 
 ```bash
 npm run build
+```
+
+Create the static GitHub Pages build with:
+
+```bash
+npm run build:pages
 ```
 
 ## Contributing data
