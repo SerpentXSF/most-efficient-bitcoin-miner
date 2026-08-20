@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Cooling = "Air" | "Hydro" | "Immersion";
 type Miner = {
@@ -15,6 +15,8 @@ type Miner = {
   confidence?: "Manufacturer" | "Catalog" | "Open hardware";
   video?: { url: string; title: string };
 };
+
+type Preset = "All" | "Under 100 W" | "Under 500 W" | "120 V" | "Quiet" | "SerpentX tested";
 
 const miners: Miner[] = [
   { maker:"Bitdeer", model:"SEALMINER A4 Ultra Hydro", hashrate:886, watts:8373, jth:9.45, cooling:"Hydro", year:2026, source:"https://www.bitdeer.com/shop/explorer", sourceName:"Bitdeer", status:"Announced" },
@@ -71,6 +73,9 @@ type SortKey = "jth" | "hashPerKw" | "hashrate" | "watts";
 
 const efficiencyFor = (miner: Miner) => miner.watts / miner.hashrate;
 const formulaDelta = (miner: Miner) => Math.abs(efficiencyFor(miner) - miner.jth) / miner.jth;
+const slugFor = (miner: Miner) => `${miner.maker}-${miner.model}`.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+const displayEfficiency = (value: number) => value.toFixed(value < 10 ? 2 : value < 100 ? 1 : 0);
+const isQuiet = (miner: Miner) => Boolean(miner.noise && (/quiet/i.test(miner.noise) || Number.parseInt(miner.noise) <= 45));
 
 function confidenceFor(miner: Miner): NonNullable<Miner["confidence"]> {
   if (miner.confidence) return miner.confidence;
@@ -86,23 +91,85 @@ export function EfficiencyIndex() {
   const [sort, setSort] = useState<SortKey>("jth");
   const [powerPrice, setPowerPrice] = useState(0.07);
   const [visible, setVisible] = useState(12);
+  const [preset, setPreset] = useState<Preset>("All");
+  const [compare, setCompare] = useState<string[]>([]);
+  const [activeSlug, setActiveSlug] = useState("");
+  const [tool, setTool] = useState<"" | "profitability">("");
+  const [urlReady, setUrlReady] = useState(false);
+  const [hashprice, setHashprice] = useState(50);
+  const [poolFee, setPoolFee] = useState(2);
+
+  useEffect(() => {
+    const readUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      setActiveSlug(params.get("miner") ?? "");
+      setTool(params.get("tool") === "profitability" ? "profitability" : "");
+      setQuery(params.get("q") ?? "");
+      const urlSegment = params.get("segment");
+      if (urlSegment === "Home" || urlSegment === "Industrial") setSegment(urlSegment);
+      const urlPreset = params.get("preset") as Preset | null;
+      if (["Under 100 W","Under 500 W","120 V","Quiet","SerpentX tested"].includes(urlPreset ?? "")) setPreset(urlPreset!);
+    };
+    readUrl();
+    setUrlReady(true);
+    window.addEventListener("popstate", readUrl);
+    return () => window.removeEventListener("popstate", readUrl);
+  }, []);
+
+  useEffect(() => {
+    if (!urlReady) return;
+    const params = new URLSearchParams(window.location.search);
+    query ? params.set("q",query) : params.delete("q");
+    segment !== "All" ? params.set("segment",segment) : params.delete("segment");
+    preset !== "All" ? params.set("preset",preset) : params.delete("preset");
+    activeSlug ? params.set("miner",activeSlug) : params.delete("miner");
+    tool ? params.set("tool",tool) : params.delete("tool");
+    const next = `${window.location.pathname}${params.size ? `?${params}` : ""}${activeSlug || tool ? "" : window.location.hash}`;
+    window.history.replaceState({},"",next);
+  }, [query, segment, preset, activeSlug, tool, urlReady]);
 
   const ranked = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return miners.filter(m => (cooling === "All" || m.cooling === cooling) && (segment === "All" || (m.segment ?? "Industrial") === segment) && (!q || `${m.maker} ${m.model}`.toLowerCase().includes(q)))
+    return miners.filter(m => {
+      const presetMatch = preset === "All" ||
+        (preset === "Under 100 W" && m.watts < 100) ||
+        (preset === "Under 500 W" && m.watts < 500) ||
+        (preset === "120 V" && Boolean(m.voltage?.includes("120"))) ||
+        (preset === "Quiet" && isQuiet(m)) ||
+        (preset === "SerpentX tested" && Boolean(m.video));
+      return presetMatch && (cooling === "All" || m.cooling === cooling) && (segment === "All" || (m.segment ?? "Industrial") === segment) && (!q || `${m.maker} ${m.model}`.toLowerCase().includes(q));
+    })
       .sort((a,b) => sort === "jth" ? efficiencyFor(a)-efficiencyFor(b) : sort === "hashPerKw" ? (1000/efficiencyFor(b))-(1000/efficiencyFor(a)) : sort === "hashrate" ? b.hashrate-a.hashrate : a.watts-b.watts);
-  }, [query, cooling, segment, sort]);
+  }, [query, cooling, segment, sort, preset]);
 
   const best = [...miners].sort((a,b)=>efficiencyFor(a)-efficiencyFor(b))[0];
   const baseline = miners.find(m=>m.model === "Antminer S19k Pro")!;
   const annualSavings = ((baseline.watts - (baseline.hashrate * efficiencyFor(best))) / 1000) * 24 * 365 * powerPrice;
   const formulaWarnings = miners.filter(miner => formulaDelta(miner) > 0.015).length;
+  const activeMiner = miners.find(miner => slugFor(miner) === activeSlug);
+  const comparedMiners = compare.map(slug => miners.find(miner => slugFor(miner) === slug)).filter(Boolean) as Miner[];
+
+  const openMiner = (miner: Miner) => {
+    setActiveSlug(slugFor(miner));
+    window.scrollTo({top:0,behavior:"smooth"});
+  };
+  const toggleCompare = (miner: Miner) => {
+    const slug = slugFor(miner);
+    setCompare(current => current.includes(slug) ? current.filter(item => item !== slug) : current.length < 4 ? [...current,slug] : current);
+  };
+  const exportData = (format: "json" | "csv") => {
+    const records = miners.map(miner=>({...miner,calculatedJth:Number(efficiencyFor(miner).toFixed(3)),slug:slugFor(miner)}));
+    const csv = ["rank,maker,model,hashrate_ths,power_w,calculated_jth,rated_jth,cooling,segment,year,source",...records.sort((a,b)=>a.calculatedJth-b.calculatedJth).map((miner,index)=>[index+1,miner.maker,miner.model,miner.hashrate,miner.watts,miner.calculatedJth,miner.jth,miner.cooling,miner.segment??"Industrial",miner.year,miner.source].map(value=>`"${String(value).replaceAll('"','""')}"`).join(","))].join("\n");
+    const blob = new Blob([format === "json" ? JSON.stringify(records,null,2) : csv],{type:format === "json" ? "application/json" : "text/csv"});
+    const link = document.createElement("a");
+    link.href=URL.createObjectURL(blob);link.download=`asic-efficiency-index.${format}`;link.click();URL.revokeObjectURL(link.href);
+  };
 
   return (
     <main>
       <header className="site-header">
         <a className="brand" href="#top" aria-label="ASIC Efficiency Index home"><span>₿</span> ASIC EFFICIENCY INDEX</a>
-        <nav aria-label="Main navigation"><a href="#rankings">Rankings</a><a href="#calculator">Cost lab</a><a href="#methodology">Methodology</a></nav>
+        <nav aria-label="Main navigation"><a href="#rankings">Rankings</a><a href="#calculator">Cost lab</a><a href="#methodology">Methodology</a><a href="?tool=profitability" onClick={e=>{e.preventDefault();setTool("profitability");window.scrollTo({top:0})}}>Profitability</a></nav>
         <div className="status"><i /> DATASET · AUG 2026</div>
       </header>
 
@@ -135,7 +202,10 @@ export function EfficiencyIndex() {
           <label className="sort">Cooling <select value={cooling} onChange={e=>{setCooling(e.target.value as "All" | Cooling);setVisible(12)}}><option value="All">All types</option><option value="Air">Air</option><option value="Hydro">Hydro</option><option value="Immersion">Immersion</option></select></label>
           <label className="sort">Sort by <select value={sort} onChange={e=>setSort(e.target.value as SortKey)}><option value="jth">Lowest J/TH</option><option value="hashPerKw">Highest TH/kW</option><option value="hashrate">Highest hashrate</option><option value="watts">Lowest power</option></select></label>
         </div>
-        <div className="data-strip" aria-label="Dataset quality summary"><span><b>{miners.length}</b> verified records</span><span><b>{formulaWarnings ? `${formulaWarnings} flagged` : "Formula checked"}</b> W ÷ TH/s</span><span><b>Updated</b> Aug 2026</span><a href="https://github.com/SerpentXSF/most-efficient-bitcoin-miner/issues/new" target="_blank" rel="noreferrer">Suggest a correction ↗</a></div>
+        <div className="quick-filters" aria-label="Quick filters">
+          <span>QUICK VIEW</span>{(["All","Under 100 W","Under 500 W","120 V","Quiet","SerpentX tested"] as Preset[]).map(item=><button key={item} className={preset===item?"active":""} onClick={()=>{setPreset(item);setVisible(12)}}>{item}</button>)}
+        </div>
+        <div className="data-strip" aria-label="Dataset quality summary"><span><b>{miners.length}</b> source-linked records</span><span><b>{formulaWarnings ? `${formulaWarnings} discrepancies` : "Formula checked"}</b> W ÷ TH/s</span><span><b>Indexed</b> Aug 2026</span><a href="https://github.com/SerpentXSF/most-efficient-bitcoin-miner/issues/new?template=miner-submission.yml" target="_blank" rel="noreferrer">Submit miner data ↗</a></div>
 
         <div className="table-wrap">
           <table>
@@ -145,12 +215,12 @@ export function EfficiencyIndex() {
               const efficiency = efficiencyFor(miner);
               return <tr key={miner.model}>
                 <td className="rank">{String(index+1).padStart(2,"0")}</td>
-                <td className="hardware"><strong>{miner.model}</strong><span>{miner.maker} · {miner.year} {miner.segment === "Home" && <i>Home</i>} {miner.status && <i>{miner.status}</i>}</span>{(miner.mode || miner.noise || miner.voltage) && <small className="spec-meta">{[miner.mode,miner.noise,miner.voltage].filter(Boolean).join(" · ")}</small>}{miner.note && <small>{miner.note}</small>}</td>
+                <td className="hardware"><button className="model-link" onClick={()=>openMiner(miner)}>{miner.model}</button><span>{miner.maker} · {miner.year} {miner.segment === "Home" && <i>Home</i>} {miner.status && <i>{miner.status}</i>}</span>{(miner.mode || miner.noise || miner.voltage) && <small className="spec-meta">{[miner.mode,miner.noise,miner.voltage].filter(Boolean).join(" · ")}</small>}{miner.note && <small>{miner.note}</small>}<label className="compare-check"><input type="checkbox" checked={compare.includes(slugFor(miner))} onChange={()=>toggleCompare(miner)} disabled={!compare.includes(slugFor(miner)) && compare.length >= 4} /> Compare</label></td>
                 <td><span className={`cooling ${miner.cooling.toLowerCase()}`}>{miner.cooling}</span></td>
                 <td>{miner.hashrate.toLocaleString()} <small>TH/s</small></td>
                 <td>{miner.watts.toLocaleString()} <small>W</small></td>
                 <td>{(1000/efficiency).toFixed(1)} <small>TH/kW</small></td>
-                <td className="efficiency"><b>{efficiency.toFixed(efficiency < 10 ? 2 : efficiency < 100 ? 1 : 0)}</b> <small>J/TH</small><span><i style={{width:`${Math.min(100, efficiency/30*100)}%`}} /></span></td>
+                <td className="efficiency"><b>{displayEfficiency(efficiency)}</b> <small>J/TH</small><span><i style={{width:`${Math.min(100, efficiency/30*100)}%`}} /></span>{formulaDelta(miner)>0.015 && <small className="flag">Rated {miner.jth} J/TH</small>}</td>
                 <td><strong>${dayCost.toFixed(2)}</strong><small> @ ${powerPrice.toFixed(2)}/kWh</small><div className="row-links"><a href={miner.source} target="_blank" rel="noreferrer">Source ↗</a>{miner.video && <a className="watch-link" href={miner.video.url} title={miner.video.title} target="_blank" rel="noreferrer">Watch ▶</a>}</div><small className="confidence">{confidenceFor(miner)}{miner.powerBoundary ? ` · ${miner.powerBoundary} power` : ""}</small></td>
               </tr>;
             })}</tbody>
@@ -159,6 +229,15 @@ export function EfficiencyIndex() {
         </div>
         {visible < ranked.length && <button className="load-more" onClick={()=>setVisible(v=>v+12)}>Show {Math.min(12, ranked.length-visible)} more <span>＋</span></button>}
         <p className="result-count">Showing {Math.min(visible,ranked.length)} of {ranked.length} matching models</p>
+
+        <div className="mobile-rankings" aria-label="Mobile miner rankings">{ranked.slice(0,visible).map((miner,index)=>{
+          const efficiency=efficiencyFor(miner);
+          return <article className="miner-card" key={`mobile-${miner.model}`}>
+            <div className="miner-card-top"><span className="rank">{String(index+1).padStart(2,"0")}</span><span className={`cooling ${miner.cooling.toLowerCase()}`}>{miner.cooling}</span></div>
+            <button className="model-link" onClick={()=>openMiner(miner)}>{miner.model}</button><small>{miner.maker} · {miner.year}</small>
+            <div className="card-metrics"><div><b>{displayEfficiency(efficiency)}</b><span>J/TH</span></div><div><b>{miner.hashrate.toLocaleString()}</b><span>TH/s</span></div><div><b>{miner.watts.toLocaleString()}</b><span>Watts</span></div></div>
+            <div className="card-actions"><button onClick={()=>openMiner(miner)}>View profile</button><label><input type="checkbox" checked={compare.includes(slugFor(miner))} onChange={()=>toggleCompare(miner)} disabled={!compare.includes(slugFor(miner)) && compare.length >= 4}/> Compare</label></div>
+          </article>})}</div>
       </section>
 
       <section className="cost-lab" id="calculator">
@@ -180,9 +259,20 @@ export function EfficiencyIndex() {
           <article><b>03</b><h3>Verify</h3><p>Primary specifications are preferred. Hashrate Index, WhatToMine, Hashrate.no, ASIC Miner Value, and specialist catalogs help cross-check gaps; every row links its source.</p></article>
         </div>
         <div className="notes"><strong>Important:</strong> Specifications are typical or advertised values, not independent lab measurements. J/TH is calculated automatically from the displayed power and hashrate. Mode, measurement boundary, ambient temperature, cooling infrastructure, PSU losses, and silicon variation can change wall efficiency. Announced hardware is labeled. This is an engineering comparison, not financial advice.</div>
+        <div className="profitability-roadmap" id="roadmap"><span>SEPARATE DECISION TOOL</span><div><h3>Profitability has its own page.</h3><p>Market assumptions, hashprice, electricity rate, pool fees and timestamps stay separate from the durable efficiency index.</p><button onClick={()=>{setTool("profitability");window.scrollTo({top:0})}}>Open profitability lab →</button></div></div>
+        <div className="data-download"><div><p className="eyebrow">OPEN DATA</p><h3>Take the index with you.</h3><p>Download the source-linked specifications and calculated efficiency values for your own analysis.</p></div><div><button onClick={()=>exportData("csv")}>Download CSV</button><button onClick={()=>exportData("json")}>Download JSON</button></div></div>
       </section>
+
+      {compare.length > 0 && <aside className="compare-tray" aria-label="Miner comparison tray"><div><b>{compare.length}/4 selected</b><span>Compare efficiency, power and operating cost</span></div><button onClick={()=>setCompare([])}>Clear</button><button className="primary" onClick={()=>(document.getElementById("comparison") as HTMLDialogElement)?.showModal()}>Compare miners</button></aside>}
+
+      <dialog id="comparison" className="comparison-dialog"><form method="dialog"><button className="dialog-close" aria-label="Close comparison">×</button></form><p className="eyebrow">SIDE-BY-SIDE</p><h2>Compare miners.</h2><div className="comparison-grid" id="comparison-grid">{comparedMiners.map(miner=>{const efficiency=efficiencyFor(miner);const annualKwh=miner.watts/1000*24*365;return <article key={miner.model}><button className="remove-compare" onClick={()=>toggleCompare(miner)} aria-label={`Remove ${miner.model}`}>×</button><small>{miner.maker}</small><h3>{miner.model}</h3><strong>{displayEfficiency(efficiency)} <span>J/TH</span></strong><dl><div><dt>Hashrate</dt><dd>{miner.hashrate.toLocaleString()} TH/s</dd></div><div><dt>Power</dt><dd>{miner.watts.toLocaleString()} W</dd></div><div><dt>Annual energy</dt><dd>{annualKwh.toLocaleString(undefined,{maximumFractionDigits:0})} kWh</dd></div><div><dt>Annual power cost</dt><dd>${(annualKwh*powerPrice).toLocaleString(undefined,{maximumFractionDigits:0})}</dd></div><div><dt>Measurement</dt><dd>{confidenceFor(miner)}{miner.powerBoundary?` · ${miner.powerBoundary}`:""}</dd></div></dl><button className="text-action" onClick={()=>{(document.getElementById("comparison") as HTMLDialogElement)?.close();openMiner(miner)}}>Full profile →</button></article>})}</div><p className="compare-note">Costs use ${powerPrice.toFixed(3)}/kWh from the Cost Lab. Annual figures assume continuous operation.</p></dialog>
+
+      {activeMiner && <section className="profile-page" role="dialog" aria-modal="true" aria-label={`${activeMiner.model} profile`}><div className="profile-header"><button onClick={()=>setActiveSlug("")} className="back-link">← Back to rankings</button><span>PROFILE · INDEXED AUG 2026</span></div><div className="profile-hero"><div><p className="eyebrow">{activeMiner.maker} · {activeMiner.year}</p><h2>{activeMiner.model}</h2><div className="profile-badges"><span>{activeMiner.segment ?? "Industrial"}</span><span>{activeMiner.cooling}</span>{activeMiner.status&&<span>{activeMiner.status}</span>}{activeMiner.video&&<span className="tested">SerpentX video</span>}</div></div><div className="profile-efficiency"><span>CALCULATED EFFICIENCY</span><strong>{displayEfficiency(efficiencyFor(activeMiner))}</strong><small>J/TH · lower is better</small></div></div><div className="profile-body"><div className="profile-specs"><article><span>Hashrate</span><b>{activeMiner.hashrate.toLocaleString()} TH/s</b></article><article><span>Power</span><b>{activeMiner.watts.toLocaleString()} W</b></article><article><span>Hash per kW</span><b>{(1000/efficiencyFor(activeMiner)).toFixed(1)} TH/kW</b></article><article><span>24h power cost</span><b>${(activeMiner.watts/1000*24*powerPrice).toFixed(2)}</b></article></div><div className="profile-columns"><article><p className="eyebrow">OPERATING PROFILE</p><dl>{activeMiner.mode&&<div><dt>Mode</dt><dd>{activeMiner.mode}</dd></div>}{activeMiner.noise&&<div><dt>Noise</dt><dd>{activeMiner.noise}</dd></div>}{activeMiner.voltage&&<div><dt>Voltage</dt><dd>{activeMiner.voltage}</dd></div>}<div><dt>Power boundary</dt><dd>{activeMiner.powerBoundary ?? "Not specified"}</dd></div><div><dt>Source class</dt><dd>{confidenceFor(activeMiner)}</dd></div><div><dt>Rated efficiency</dt><dd>{activeMiner.jth} J/TH</dd></div></dl>{activeMiner.note&&<p className="profile-note">{activeMiner.note}</p>}<a className="source-button" href={activeMiner.source} target="_blank" rel="noreferrer">View specification source ↗</a></article><article className="video-panel"><p className="eyebrow">HANDS-ON CONTEXT</p>{activeMiner.video?<><h3>{activeMiner.video.title}</h3><p>Watch SerpentX Tech’s coverage of this hardware for practical context beyond the specification sheet.</p><a href={activeMiner.video.url} target="_blank" rel="noreferrer">Watch on YouTube ▶</a></>:<><h3>No matching video yet.</h3><p>The profile stays focused on sourced specifications. Browse the channel for related home-mining coverage.</p><a href="https://www.youtube.com/@SerpentXTech" target="_blank" rel="noreferrer">Browse SerpentX Tech ▶</a></>}</article></div><div className="related"><p className="eyebrow">RELATED HARDWARE & MODES</p><div>{miners.filter(m=>m!==activeMiner&&(m.maker===activeMiner.maker||m.segment===activeMiner.segment)).sort((a,b)=>Math.abs(efficiencyFor(a)-efficiencyFor(activeMiner))-Math.abs(efficiencyFor(b)-efficiencyFor(activeMiner))).slice(0,3).map(miner=><button key={miner.model} onClick={()=>openMiner(miner)}><small>{miner.maker}</small><b>{miner.model}</b><span>{displayEfficiency(efficiencyFor(miner))} J/TH →</span></button>)}</div></div></div></section>}
+
+      {tool === "profitability" && <section className="profit-page" role="dialog" aria-modal="true" aria-label="Bitcoin miner profitability lab"><div className="profile-header"><button onClick={()=>setTool("")} className="back-link">← Back to efficiency index</button><span>USER-SET ASSUMPTIONS · NOT LIVE FINANCIAL DATA</span></div><div className="profit-hero"><p className="eyebrow">PROFITABILITY LAB</p><h2>Market math,<br/><em>kept separate.</em></h2><p>Estimate operating margin using your own hashprice, electricity rate and pool fee. Efficiency remains the durable comparison; profitability is a moment-in-time scenario.</p></div><div className="profit-controls"><label>HASHPRICE <span>USD per PH/s per day</span><input type="number" min="0" step="0.1" value={hashprice} onChange={e=>setHashprice(Number(e.target.value))}/></label><label>ELECTRICITY <span>USD per kWh</span><input type="number" min="0" step="0.005" value={powerPrice} onChange={e=>setPowerPrice(Number(e.target.value))}/></label><label>POOL FEE <span>Percent</span><input type="number" min="0" max="100" step="0.1" value={poolFee} onChange={e=>setPoolFee(Number(e.target.value))}/></label></div><div className="profit-table"><div className="profit-head"><span>Miner</span><span>Gross / day</span><span>Power / day</span><span>Net / day</span><span>Margin</span></div>{miners.map(miner=>{const gross=miner.hashrate/1000*hashprice;const power=miner.watts/1000*24*powerPrice;const net=gross*(1-poolFee/100)-power;const margin=gross?net/gross*100:0;return {...miner,gross,power,net,margin}}).sort((a,b)=>b.net-a.net).map(miner=><button className="profit-row" key={miner.model} onClick={()=>{setTool("");openMiner(miner)}}><span><b>{miner.model}</b><small>{miner.maker} · {displayEfficiency(efficiencyFor(miner))} J/TH</small></span><span>${miner.gross.toFixed(2)}</span><span>−${miner.power.toFixed(2)}</span><span className={miner.net>=0?"positive":"negative"}>{miner.net>=0?"+":"−"}${Math.abs(miner.net).toFixed(2)}</span><span>{miner.margin.toFixed(0)}%</span></button>)}</div><div className="profit-disclaimer"><strong>Scenario only.</strong> The default hashprice is an editable example, not a live quote. Results exclude hardware cost, taxes, downtime, cooling overhead beyond listed miner power, pool variance and changes in network difficulty or BTC price. Verify current hashprice before making decisions.</div></section>}
 
       <footer><a className="brand" href="#top"><span>₿</span> ASIC EFFICIENCY INDEX</a><p>Built for miners who measure twice.</p><div><a href="https://www.youtube.com/@SerpentXTech" target="_blank" rel="noreferrer">SerpentX Tech ▶</a><a href="https://hashrateindex.com/rigs" target="_blank" rel="noreferrer">Hashrate Index ↗</a><a href="https://whattomine.com/asics" target="_blank" rel="noreferrer">WhatToMine ↗</a><a href="https://www.hashrate.no/asics" target="_blank" rel="noreferrer">Hashrate.no ↗</a><a href="https://www.asicminervalue.com/" target="_blank" rel="noreferrer">ASIC Miner Value ↗</a></div></footer>
     </main>
   );
 }
+

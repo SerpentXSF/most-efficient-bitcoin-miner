@@ -1,0 +1,77 @@
+name: Add or correct a miner
+description: Submit a SHA-256 miner, operating profile, source, or measurement correction.
+title: "Miner data: "
+labels: ["miner-data"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for helping improve the ASIC Efficiency Index. Please use wall-power measurements when available and identify the operating mode.
+  - type: input
+    id: model
+    attributes:
+      label: Manufacturer and model
+      placeholder: e.g. Bitaxe Gamma 601
+    validations:
+      required: true
+  - type: dropdown
+    id: request
+    attributes:
+      label: Submission type
+      options:
+        - New miner
+        - Correct an existing miner
+        - Add an operating mode
+        - Add an independent measurement
+    validations:
+      required: true
+  - type: input
+    id: hashrate
+    attributes:
+      label: Hashrate (TH/s)
+      placeholder: e.g. 1.2
+    validations:
+      required: true
+  - type: input
+    id: power
+    attributes:
+      label: Power (watts)
+      placeholder: e.g. 18
+    validations:
+      required: true
+  - type: input
+    id: mode
+    attributes:
+      label: Operating mode, firmware, or clock settings
+      placeholder: e.g. Stock firmware, default mode
+  - type: dropdown
+    id: boundary
+    attributes:
+      label: Power measurement boundary
+      options:
+        - Wall power
+        - Board power
+        - Manufacturer rating
+        - Unknown
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Specification or measurement source
+      description: Link to a manufacturer page, manual, test results, video, or open-hardware repository.
+      placeholder: https://
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Include voltage, noise, ambient conditions, cooling, PSU losses, and anything else that affects the result.
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have identified whether the power value is measured at the wall, board-level, or manufacturer-rated.
+          required: true
+
