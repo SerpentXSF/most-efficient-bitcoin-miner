@@ -75,7 +75,16 @@ const efficiencyFor = (miner: Miner) => miner.watts / miner.hashrate;
 const formulaDelta = (miner: Miner) => Math.abs(efficiencyFor(miner) - miner.jth) / miner.jth;
 const slugFor = (miner: Miner) => `${miner.maker}-${miner.model}`.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
 const displayEfficiency = (value: number) => value.toFixed(value < 10 ? 2 : value < 100 ? 1 : 0);
-const isQuiet = (miner: Miner) => Boolean(miner.noise && (/quiet/i.test(miner.noise) || Number.parseInt(miner.noise) <= 45));
+const isQuiet = (miner: Miner) => {
+  if (!miner.noise) return false;
+  const levels = miner.noise.match(/\d+/g)?.map(Number) ?? [];
+  return /quiet/i.test(miner.noise) || (levels.length > 0 && Math.max(...levels) <= 45);
+};
+const supports120v = (miner: Miner) => {
+  if (!miner.voltage) return false;
+  const values = miner.voltage.match(/\d+/g)?.map(Number) ?? [];
+  return miner.voltage.includes("120") || (values.length >= 2 && Math.min(...values) <= 120 && Math.max(...values) >= 120);
+};
 
 function confidenceFor(miner: Miner): NonNullable<Miner["confidence"]> {
   if (miner.confidence) return miner.confidence;
@@ -134,7 +143,7 @@ export function EfficiencyIndex() {
       const presetMatch = preset === "All" ||
         (preset === "Under 100 W" && m.watts < 100) ||
         (preset === "Under 500 W" && m.watts < 500) ||
-        (preset === "120 V" && Boolean(m.voltage?.includes("120"))) ||
+        (preset === "120 V" && supports120v(m)) ||
         (preset === "Quiet" && isQuiet(m)) ||
         (preset === "SerpentX tested" && Boolean(m.video));
       return presetMatch && (cooling === "All" || m.cooling === cooling) && (segment === "All" || (m.segment ?? "Industrial") === segment) && (!q || `${m.maker} ${m.model}`.toLowerCase().includes(q));
