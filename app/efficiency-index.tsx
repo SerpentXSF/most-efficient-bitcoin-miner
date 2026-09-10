@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { HostingIndex } from "./hosting-index";
 
 type Cooling = "Air" | "Hydro" | "Immersion";
 type Miner = {
@@ -117,7 +118,7 @@ export function EfficiencyIndex() {
   const [preset, setPreset] = useState<Preset>("All");
   const [compare, setCompare] = useState<string[]>([]);
   const [activeSlug, setActiveSlug] = useState("");
-  const [tool, setTool] = useState<"" | "profitability">("");
+  const [tool, setTool] = useState<"" | "profitability" | "hosting">("");
   const [urlReady, setUrlReady] = useState(false);
   const [hashprice, setHashprice] = useState(50);
   const [poolFee, setPoolFee] = useState(2);
@@ -126,7 +127,8 @@ export function EfficiencyIndex() {
     const readUrl = () => {
       const params = new URLSearchParams(window.location.search);
       setActiveSlug(params.get("miner") ?? "");
-      setTool(params.get("tool") === "profitability" ? "profitability" : "");
+      const urlTool = params.get("tool");
+      setTool(urlTool === "profitability" || urlTool === "hosting" ? urlTool : "");
       setQuery(params.get("q") ?? "");
       const urlSegment = params.get("segment");
       if (urlSegment === "Home" || urlSegment === "Industrial") setSegment(urlSegment);
@@ -192,7 +194,7 @@ export function EfficiencyIndex() {
     <main>
       <header className="site-header">
         <a className="brand" href="#top" aria-label="ASIC Efficiency Index home"><span>₿</span> ASIC EFFICIENCY INDEX</a>
-        <nav aria-label="Main navigation"><a href="#rankings">Rankings</a><a href="#calculator">Cost lab</a><a href="#methodology">Methodology</a><a href="?tool=profitability" onClick={e=>{e.preventDefault();setTool("profitability");window.scrollTo({top:0})}}>Profitability</a></nav>
+        <nav aria-label="Main navigation"><a href="#rankings">Rankings</a><a href="#calculator">Cost lab</a><a href="?tool=hosting" onClick={e=>{e.preventDefault();setTool("hosting");window.scrollTo({top:0})}}>Hosting</a><a href="#methodology">Methodology</a><a href="?tool=profitability" onClick={e=>{e.preventDefault();setTool("profitability");window.scrollTo({top:0})}}>Profitability</a></nav>
         <div className="status"><i /> DATASET · SEP 2026</div>
       </header>
 
@@ -201,7 +203,7 @@ export function EfficiencyIndex() {
           <p className="eyebrow">THE POWER-TRUE ASIC LEADERBOARD</p>
           <h1>More hash.<br /><em>Less heat.</em></h1>
           <p className="lede">Bitcoin mining hardware ranked by energy efficiency—not short-term coin price, network luck, or hype.</p>
-          <a className="jump" href="#rankings">Explore the rankings <span>↓</span></a>
+          <div className="hero-actions"><a className="jump" href="#rankings">Explore the rankings <span>↓</span></a><a className="jump" href="?tool=hosting" onClick={e=>{e.preventDefault();setTool("hosting");window.scrollTo({top:0})}}>Compare hosting <span>→</span></a></div>
         </div>
         <div className="metric-card" aria-label="Joules per terahash: lower is better">
           <span>LOWER IS BETTER</span><strong>J/TH</strong><small>joules per terahash</small>
@@ -294,7 +296,9 @@ export function EfficiencyIndex() {
 
       {tool === "profitability" && <section className="profit-page" role="dialog" aria-modal="true" aria-label="Bitcoin miner profitability lab"><div className="profile-header"><button onClick={()=>setTool("")} className="back-link">← Back to efficiency index</button><span>USER-SET ASSUMPTIONS · NOT LIVE FINANCIAL DATA</span></div><div className="profit-hero"><p className="eyebrow">PROFITABILITY LAB</p><h2>Market math,<br/><em>kept separate.</em></h2><p>Estimate operating margin using your own hashprice, electricity rate and pool fee. Efficiency remains the durable comparison; profitability is a moment-in-time scenario.</p></div><div className="profit-controls"><label>HASHPRICE <span>USD per PH/s per day</span><input type="number" min="0" step="0.1" value={hashprice} onChange={e=>setHashprice(Number(e.target.value))}/></label><label>ELECTRICITY <span>USD per kWh</span><input type="number" min="0" step="0.005" value={powerPrice} onChange={e=>setPowerPrice(Number(e.target.value))}/></label><label>POOL FEE <span>Percent</span><input type="number" min="0" max="100" step="0.1" value={poolFee} onChange={e=>setPoolFee(Number(e.target.value))}/></label></div><div className="profit-table"><div className="profit-head"><span>Miner</span><span>Gross / day</span><span>Power / day</span><span>Net / day</span><span>Margin</span></div>{miners.map(miner=>{const gross=miner.hashrate/1000*hashprice;const power=miner.watts/1000*24*powerPrice;const net=gross*(1-poolFee/100)-power;const margin=gross?net/gross*100:0;return {...miner,gross,power,net,margin}}).sort((a,b)=>b.net-a.net).map(miner=><button className="profit-row" key={miner.model} onClick={()=>{setTool("");openMiner(miner)}}><span><b>{miner.model}</b><small>{miner.maker} · {displayEfficiency(efficiencyFor(miner))} J/TH</small></span><span>${miner.gross.toFixed(2)}</span><span>−${miner.power.toFixed(2)}</span><span className={miner.net>=0?"positive":"negative"}>{miner.net>=0?"+":"−"}${Math.abs(miner.net).toFixed(2)}</span><span>{miner.margin.toFixed(0)}%</span></button>)}</div><div className="profit-disclaimer"><strong>Scenario only.</strong> The default hashprice is an editable example, not a live quote. Results exclude hardware cost, taxes, downtime, cooling overhead beyond listed miner power, pool variance and changes in network difficulty or BTC price. Verify current hashprice before making decisions.</div></section>}
 
-      <footer><a className="brand" href="#top"><span>₿</span> ASIC EFFICIENCY INDEX</a><p>Built for miners who measure twice.</p><div><a href="https://www.youtube.com/@SerpentXTech" target="_blank" rel="noreferrer">SerpentX Tech ▶</a><a href="https://hashrateindex.com/rigs" target="_blank" rel="noreferrer">Hashrate Index ↗</a><a href="https://whattomine.com/asics" target="_blank" rel="noreferrer">WhatToMine ↗</a><a href="https://www.hashrate.no/asics" target="_blank" rel="noreferrer">Hashrate.no ↗</a><a href="https://www.asicminervalue.com/" target="_blank" rel="noreferrer">ASIC Miner Value ↗</a></div></footer>
+      {tool === "hosting" && <HostingIndex onClose={()=>setTool("")} />}
+
+      <footer><a className="brand" href="#top"><span>₿</span> ASIC EFFICIENCY INDEX</a><p>Built for miners who measure twice.</p><div><a href="?tool=hosting" onClick={e=>{e.preventDefault();setTool("hosting");window.scrollTo({top:0})}}>Hosting index</a><a href="https://www.youtube.com/@SerpentXTech" target="_blank" rel="noreferrer">SerpentX Tech ▶</a><a href="https://hashrateindex.com/rigs" target="_blank" rel="noreferrer">Hashrate Index ↗</a><a href="https://whattomine.com/asics" target="_blank" rel="noreferrer">WhatToMine ↗</a><a href="https://www.hashrate.no/asics" target="_blank" rel="noreferrer">Hashrate.no ↗</a><a href="https://www.asicminervalue.com/" target="_blank" rel="noreferrer">ASIC Miner Value ↗</a></div></footer>
     </main>
   );
 }
