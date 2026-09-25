@@ -45,7 +45,6 @@ const rates: Rate[] = [
   {provider:"OneMiners",location:"United States",rate:.074,priceLabel:"Premium tier",minimum:"1 unit",term:"Quote",fees:"No service fee stated",comparable:true,source:"https://oneminers.com/pages/usa-asic-hosting-no-service-fees",note:"Page also lists $0.079 for miners bought online and $0.0869 for external miners."},
   {provider:"Wattum",location:"Texas",rate:.075,priceLabel:"Published",minimum:"Quote",term:"Quote",fees:"No add-on disclosed",comparable:true,source:"https://wattum.io/pages/hosting"},
   {provider:"Pickaxe",location:"United States",rate:.075,priceLabel:"Published",minimum:"1 unit",term:"Annual, paid monthly",fees:"Setup included",comparable:true,source:"https://www.pickaxe.io/hosting"},
-  {provider:"StartMining",location:"United States",rate:.075,priceLabel:"2024 brochure",minimum:"Quote",term:"Quote",fees:"No take-or-pay stated",comparable:false,source:"https://www.antminerdistribution.com/wp-content/uploads/2024/11/Startmining-Hosting-USA.pdf",note:"Older public brochure; re-confirm availability and rate."},
   {provider:"Netsonic",location:"Green Bay, Wisconsin",rate:.075,priceLabel:"From",minimum:"1 unit",term:"Quote",fees:"Metered",comparable:false,source:"https://www.netsonic.net/asic-miner-hosting.php",note:"Starting rate; final terms require a quote."},
   {provider:"Musk Miners",location:"United States",rate:.080,priceLabel:"Published",minimum:"1 unit",term:"12 months",fees:"All-in; no service/rack fee",comparable:true,source:"https://www.muskminers.com/hosting/",note:"Only miners purchased through Musk Miners are eligible."},
   {provider:"Simple Mining",location:"United States",rate:.080,priceLabel:"Retail tier",minimum:"Under 500 kW",term:"12 months",fees:"All-in",comparable:true,source:"https://www.simplemining.io/insights/post/simple-mining-onboarding-guide",note:"Volume tiers are $0.075 at 500–999 kW and $0.07 at 1 MW+."},
@@ -93,7 +92,6 @@ const directory = [
   ["East Coast ASIC Hosting","Retail / fleet BYOM","Starting rate","https://eastcoastasichosting.com/"],
   ["AsicHive / VeriPic","Fleet BYOM","Public, older rate","https://www.asichive.com/"],
   ["Iowa Mining","Fleet BYOM","Public, older rate","https://iowamining.io/services/"],
-  ["StartMining","Fleet hosting","Public, older brochure","https://www.antminerdistribution.com/wp-content/uploads/2024/11/Startmining-Hosting-USA.pdf"],
   ["Compass Mining","Retail buy & host","Account / quote","https://support.compassmining.io/hc/en-us/articles/5193858397341-Hosting-fee-FAQs"],
   ["River","U.S. managed mining","Account / quote","https://river.com/learn/what-is-hosted-mining/"],
   ["Frontier Mining","Fleet hosting","Quote required","https://www.frontiermining.com/asic-miner-sales-hosting-solution"],
@@ -147,7 +145,7 @@ export function HostingIndex({onClose}:{onClose:()=>void}) {
   const monthlyAt = (rate:number) => watts/1000*24*30*rate;
 
   return <section className="hosting-page" role="dialog" aria-modal="true" aria-label="Bitcoin miner hosting index">
-    <header className="hosting-topbar"><button onClick={onClose} className="back-link">← Efficiency index</button><span>RESEARCHED · SEP 09 2026</span></header>
+    <header className="hosting-topbar"><button onClick={onClose} className="back-link">← Efficiency index</button><span>RESEARCHED · SEP 24 2026</span></header>
     <section className="hosting-hero">
       <div><p className="eyebrow">THE HOSTING PROCUREMENT INDEX</p><h2>Compare the rack.<br/><em>Not the headline.</em></h2><p>Official, source-linked Bitcoin ASIC hosting offers separated by contract type. Public rates rank; quote-only providers remain discoverable.</p></div>
       <aside><span>PUBLIC PRICING FOUND</span><strong>{rates.length}</strong><small>site / tier offers</small></aside>
